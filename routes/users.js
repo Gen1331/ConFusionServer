@@ -1,6 +1,6 @@
 var express = require('express');
 const bodyParser = require('body-parser');
-var User = require('../models/user');
+var User = require('../models/users');
 var passport = require('passport');
 var authenticate = require('../authenticate');
 
@@ -8,8 +8,10 @@ var router = express.Router();
 router.use(bodyParser.json());
 
 /* GET users listing. */
-router.get('/', function (req, res, next) {
-  res.send('respond with a resource');
+router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+  User.find();
+
+  // res.send('respond with a resource');
 });
 
 router.post('/signup', (req, res, next) => {
@@ -62,5 +64,6 @@ router.get('/logout', (req, res) => {
     next(err);
   }
 });
+
 
 module.exports = router;

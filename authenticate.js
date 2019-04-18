@@ -1,11 +1,11 @@
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
-var User = require('./models/user');
 var JwtStrategy = require('passport-jwt').Strategy;
 var ExtractJwt = require('passport-jwt').ExtractJwt;
 var jwt = require('jsonwebtoken'); // used to create, sign, and verify tokens
 
 var config = require('./config.js');
+var User = require('./models/users');
 
 exports.local = passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
@@ -20,10 +20,13 @@ var opts = {};
 opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 opts.secretOrKey = config.secretKey;
 
+
 exports.jwtPassport = passport.use(new JwtStrategy(opts,
     (jwt_payload, done) => {
+
         console.log("JWT payload: ", jwt_payload);
         User.findOne({_id: jwt_payload._id}, (err, user) => {
+            
             if (err) {
                 return done(err, false);
             }
@@ -35,5 +38,19 @@ exports.jwtPassport = passport.use(new JwtStrategy(opts,
             }
         });
     }));
+
+exports.verifyAdmin = function (req, next) {
+    if (req.user.admin === true) {
+        next()
+    }
+    else {
+        var err = new Error("You are not authorized to perform this operation!");
+        err.status = 403;
+        next(err)
+
+    }
+}
+
+
 
 exports.verifyUser = passport.authenticate('jwt', {session: false});
